@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs/dist/types';
-import { distinctUntilChanged, filter } from 'rxjs/dist/types/operators';
+
+import { BehaviorSubject, Observable,filter,distinctUntilChanged } from 'rxjs';
 import { UserInfo } from '../model';
 
 const DEMO_USER: UserInfo = { name: 'demo user', address: 'demo address' };

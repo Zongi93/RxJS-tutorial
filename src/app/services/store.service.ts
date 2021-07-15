@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject } from 'rxjs/dist/types';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Product } from '../model';
 import { UserService } from './user.service';
 
