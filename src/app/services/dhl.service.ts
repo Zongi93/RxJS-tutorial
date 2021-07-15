@@ -5,7 +5,8 @@ import {
   map,
   withLatestFrom,
   switchMapTo,
-  take
+  take,
+  delay
 } from 'rxjs';
 import { Order } from '../model';
 import { StoreService } from './store.service';
@@ -22,20 +23,13 @@ export class DhlService {
   );
 
   // truck only comes once a day to pick up orders
-  readonly delivery$ = this.order$.pipe(
+  readonly deliveryTakenFromStore$ = this.order$.pipe(
     bufferTime(ONE_DAY),
     filter(arr => arr.length > 0),
     map(orders => this.sortByShortestPath(orders))
   );
 
-  readonly userHasDeliveryInProgress = this.userService.login$.pipe(
-    switchMapTo(this.delivery$),
-    take(1),
-    filter(orders => {
-      const currentUserName = this.userService.user.name;
-      return orders.some(order => order.user.name === currentUserName);
-    })
-  );
+   readonly deliveryDelivered$ = this.deliveryTakenFromStore$.pipe(delay(ONE_DAY));
 
   constructor(
     private readonly userService: UserService,

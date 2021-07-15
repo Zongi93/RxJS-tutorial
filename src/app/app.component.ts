@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { combineLatest,map,BehaviorSubject} from 'rxjs';
-import { Product } from './model';
+import { combineLatest,map,BehaviorSubject,debounceTime,tap} from 'rxjs';
+import { Order, Product } from './model';
 import { DhlService } from './services/dhl.service';
 import { StoreService } from './services/store.service';
 
@@ -11,17 +11,36 @@ import { StoreService } from './services/store.service';
 })
 export class AppComponent {
   private readonly filterByTextSubject = new BehaviorSubject<string>('');
-  readonly inventory$ = combineLatest(this.storeService.inventory$, this.filterByTextSubject).pipe(map(this.filterInventoryByInput));
+  readonly inventory$ = 
+    combineLatest(this.storeService.inventory$, this.filterByTextSubject)
+      .pipe(
+        debounceTime(300),
+        map(this.filterInventoryByInput));
+
+  trackedOrders : Array<{product:Product,state:'proccessing'|'in delivery' | 'delivered'}> = [];
 
   constructor(
     private readonly storeService: StoreService,
     private readonly dhlService: DhlService
   ) {
-    dhlService.delivery$.subscribe(toDeliver => console.log({ toDeliver }));
+    dhlService.deliveryTakenFromStore$
+    .pipe(
+      tap(ordersInDelivery => console.log({ ordersInDelivery })))
+      .subscribe(ordersInDelivery => 
+        this.updateProductStates(ordersInDelivery,'in delivery')
+      );
+
+    dhlService.deliveryDelivered$
+    .pipe(
+      tap(ordersDelivered => console.log({ ordersDelivered })))
+      .subscribe(ordersDelivered => 
+        this.updateProductStates(ordersDelivered,'delivered')
+      );
   }
 
   order(product: Product) {
     this.storeService.order(product);
+    this.trackedOrders.push({product,state:'proccessing'});
   }
 
   onFilterKeyDown(event: KeyboardEvent): void {
@@ -32,5 +51,13 @@ export class AppComponent {
 
   private filterInventoryByInput([inventory, filterBy]: [Array<Product>, string]): Array<Product> {
     return inventory.filter(product => filterBy.length === 0 || product.name.toLocaleLowerCase().indexOf(filterBy.toLocaleLowerCase()) > -1);
+  }
+
+  private updateProductStates(update:Array<Order>,stateToUpdateTo:'in delivery' | 'delivered'):void{
+    this.trackedOrders.forEach(tracked => {
+      if (update.some(order => tracked.product.id === order.product.id)) {
+        tracked.state = stateToUpdateTo;
+      }
+    })
   }
 }

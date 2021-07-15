@@ -16,3 +16,17 @@
     </tr>
   </tbody>
 </table>
+
+<h3>Delivery tracking:</h3>
+<table>
+<thead>
+  <th>Name</th>
+  <th>Status</th>
+</thead>
+<tbody>
+  <tr *ngFor="let trackedOrder of trackedOrders">
+    <td>{{trackedOrder.product.name}}</td>
+    <td>{{trackedOrder.state}}</td>
+  </tr>
+</tbody>
+</table>
